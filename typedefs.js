@@ -1,23 +1,31 @@
-import knex from "./db";
 import { ApolloServer } from "apollo-server";
-import { SQLDataSource } from "./SQLDataSource";
-import { addAuthClause } from "./authClause";
-import { GraphQLDate, GraphQLTime, GraphQLDateTime } from "graphql-iso-date";
+import {
+  GraphQLBoolean,
+  GraphQLFloat,
+  GraphQLID,
+  GraphQLInt,
+  GraphQLList,
+  GraphQLObjectType,
+  GraphQLSchema,
+  GraphQLString,
+} from "graphql";
+import { GraphQLDateTime } from "graphql-iso-date";
 import GraphQLJSON from "graphql-type-json";
+import knex from "./db";
+import { SQLDataSource } from "./SQLDataSource";
 
 var pluralize = require("pluralize");
 var _ = require("lodash");
-var graphql = require("graphql");
 
 const typesMap = {
-  boolean: graphql.GraphQLBoolean,
-  "character varying": graphql.GraphQLString,
+  boolean: GraphQLBoolean,
+  "character varying": GraphQLString,
   date: GraphQLDateTime,
-  "double precision": graphql.GraphQLFloat,
-  integer: graphql.GraphQLInt,
+  "double precision": GraphQLFloat,
+  integer: GraphQLInt,
   jsonb: GraphQLJSON,
-  numeric: graphql.GraphQLFloat,
-  text: graphql.GraphQLString,
+  numeric: GraphQLFloat,
+  text: GraphQLString,
   "timestamp with time zone": GraphQLDateTime,
 };
 
@@ -115,7 +123,7 @@ const createTypeDefs = (map, relations, primaryKeys) => {
 
 const getTypeForScalarColumn = (isPrimary, dbType) => {
   if (isPrimary) {
-    return graphql.GraphQLID;
+    return GraphQLID;
   } else {
     return typesMap[dbType];
   }
@@ -129,7 +137,7 @@ const createTypeDef = (
   map,
   primaryCol
 ) =>
-  new graphql.GraphQLObjectType({
+  new GraphQLObjectType({
     name: _.camelCase(table_name),
     fields: () => {
       const cols = columns.reduce((acc, col) => {
@@ -171,9 +179,9 @@ const createTypeDef = (
 
       const __relations = oneToMany.reduce((acc, relation) => {
         acc[pluralize(_.camelCase(relation.table_name))] = {
-          type: new graphql.GraphQLList(typedefs[relation.table_name]),
+          type: new GraphQLList(typedefs[relation.table_name]),
           args: map.get(relation.table_name).reduce((acc, col) => {
-            acc[col.column_name] = { type: graphql.GraphQLString };
+            acc[col.column_name] = { type: GraphQLString };
             return acc;
           }, {}),
           resolve: async (parent, args, context, info) => {
@@ -229,9 +237,9 @@ export const buildApolloServer = async () => {
   const fields = {};
   Object.entries(typedefs).map(([table_name, def]) => {
     fields[pluralize.singular(_.camelCase(table_name))] = {
-      type: new graphql.GraphQLList(def),
+      type: new GraphQLList(def),
       args: map.get(table_name).reduce((acc, col) => {
-        acc[col.column_name] = { type: graphql.GraphQLString };
+        acc[col.column_name] = { type: GraphQLString };
         return acc;
       }, {}),
       resolve: async (parent, args, context, info) => {
@@ -241,12 +249,12 @@ export const buildApolloServer = async () => {
     };
   });
 
-  const query = new graphql.GraphQLObjectType({
+  const query = new GraphQLObjectType({
     name: "Query",
     fields,
   });
 
-  const schema = new graphql.GraphQLSchema({
+  const schema = new GraphQLSchema({
     query,
   });
 
